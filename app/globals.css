@@ -1,0 +1,105 @@
+/* Tokens. Brand colours come from the live site and logo; surfaces, radii and control sizes from siteassist.com.
+   No other hues are used in the interface. Photography keeps its own colour. */
+:root {
+  --navy: #074059;   /* live site: most-used text/background colour, rgb(7,64,89); logo top facet */
+  --ink: #0a2b4a;    /* logo wordmark fill (header PNG). Body text, and the only text colour allowed on cyan */
+  --cyan: #04a3d5;   /* live site: primary background / accent, rgb(4,163,213) */
+  --white: #ffffff;
+  /* siteassist.com neutrals (#EFF2EF panel, #E3E7E2 footer/secondary button, #D9DFD9 divider), shifted from green-grey
+     to the navy's blue-grey so they sit with the brand. */
+  --mist: #eef2f4;
+  --mist-2: #e2e8eb;
+  --line: #d5dde2;
+  --muted: #4d6475;  /* ink at ~75% on white: 6.2:1 */
+  --overlay: rgba(7, 64, 89, .45); /* live site hero overlay, rgba(7,64,89,.45) */
+
+  --ease: cubic-bezier(.215, .61, .355, 1); /* siteassist.com .button transition curve */
+  --hover: .2s;                              /* siteassist.com .button transition duration */
+  --radius: 8px;                             /* siteassist.com navbar, cards, footer panel */
+  --radius-sm: 3.5px;                        /* siteassist.com .button */
+
+  --gutter: clamp(16px, 2.2vw, 32px);        /* siteassist.com section padding: 32px at 1440 */
+  --max: 1376px;
+  --nav-max: 1120px;                         /* siteassist.com .navbar max-width */
+
+  --f-sans: var(--font-jost), "Jost", system-ui, sans-serif;
+  --f-cond: var(--font-cond), "Roboto Condensed", "Arial Narrow", sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+body {
+  margin: 0;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--f-sans);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+img, video, svg { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+h1, h2, h3, h4, p, ul, ol { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+::selection { background: var(--cyan); color: var(--ink); }
+
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 2px; }
+[data-tone="dark"] :focus-visible { outline-color: var(--white); }
+
+.skip {
+  position: fixed; left: 16px; top: 16px; z-index: 100; padding: 10px 14px; border-radius: var(--radius-sm);
+  background: var(--navy); color: var(--white); font: 500 14px/1 var(--f-cond); letter-spacing: .04em; text-transform: uppercase;
+  transform: translateY(-200%);
+}
+.skip:focus { transform: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.wrap { width: 100%; max-width: calc(var(--max) + var(--gutter) * 2); margin: 0 auto; padding: 0 var(--gutter); }
+
+/* ---------- Type roles ----------
+   siteassist.com pairs Geist Mono (uppercase labels, hero, list rows) with Geist (statements, body).
+   Here Roboto Condensed takes the mono role and Jost the sans role; both are the live site's own fonts. */
+.label {
+  display: inline-flex; align-items: center; gap: 10px;
+  font: 500 13px/1.2 var(--f-cond); letter-spacing: .08em; text-transform: uppercase;
+}
+.label::before { content: ""; width: 7px; height: 7px; background: var(--cyan); flex: none; } /* siteassist .label-square 7x7 */
+.statement { font: 400 clamp(30px, 3.5vw, 50px)/1.1 var(--f-sans); letter-spacing: -.03em; } /* siteassist 50px/55px, -1.56px */
+.display { font: 400 clamp(44px, 5vw, 72px)/1 var(--f-sans); letter-spacing: -.045em; }      /* siteassist 72px/72px, -3.24px */
+.cond-title { font: 400 clamp(20px, 1.7vw, 24px)/1.15 var(--f-cond); text-transform: uppercase; letter-spacing: .01em; }
+.body { font-size: 16px; line-height: 1.5; color: var(--muted); }
+[data-tone="dark"] .body { color: rgba(255, 255, 255, .78); }
+
+/* ---------- Buttons (siteassist .button: mono 14px, .56px tracking, 7px 10.5px padding, 3.5px radius) ---------- */
+.btn {
+  --bg: var(--navy); --fg: var(--white); --bg-h: var(--cyan); --fg-h: var(--ink);
+  position: relative; display: inline-flex; align-items: center; gap: 10px; overflow: hidden; isolation: isolate;
+  padding: 11px 14px; border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--fg);
+  font: 500 14px/1.1 var(--f-cond); letter-spacing: .04em; text-transform: uppercase;
+  transition: color var(--hover) var(--ease), background-color var(--hover) var(--ease);
+}
+.btn svg { width: 14px; height: 14px; flex: none; transition: transform var(--hover) var(--ease); }
+.btn:hover { background: var(--bg-h); color: var(--fg-h); }
+.btn:hover svg { transform: translateX(3px); }
+.btn--quiet { --bg: var(--mist-2); --fg: var(--ink); --bg-h: var(--navy); --fg-h: var(--white); }
+.btn--light { --bg: var(--white); --fg: var(--ink); --bg-h: var(--cyan); --fg-h: var(--ink); }
+.btn--glass { --bg: rgba(255, 255, 255, .14); --fg: var(--white); --bg-h: var(--white); --fg-h: var(--ink); }
+.btn--sm { padding: 8px 11px; font-size: 13px; }
+
+/* ---------- Reveal system (see components/motion.tsx) ----------
+   `js` is set on <html> before paint unless reduced motion is requested, so hidden start states never flash
+   and nothing is hidden for no-JS or reduced-motion visitors. */
+.js [data-reveal="label"]:not([data-shown]),
+.js [data-reveal="card"]:not([data-shown]) { opacity: 0; }
+.js [data-reveal="text"]:not([data-shown]) { visibility: hidden; }
+.wm { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
+.wi { display: inline-block; will-change: transform; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}

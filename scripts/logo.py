@@ -1,0 +1,162 @@
+"""Rebuild the Pentagon Technical Services logo as vectors.
+
+The live site only serves rasters (`pentagontechnicalservices.png`, 168x144, and
+`icon.png`, 136x129). This script rebuilds both parts:
+
+- The mark: five triangles forming an aperture. Measured on icon.png (x6 upscale):
+  a regular pentagon (circumradius R, top vertex up) whose triangle k runs
+  V_k -> V_k+1 -> I_k, where I_k sits on an inner pentagon of radius 0.194R at
+  angle (-130 + 72k) degrees. I_k+1 falls on the edge V_k+1 -> I_k, which is what
+  makes the pinwheel, and the uncovered centre is the pale "shutter" hole.
+- The wordmark: Jost (their site font, and a near match for the logo's geometric
+  capitals). "PENTAGON" is Jost 400 at a 25px cap height tracked to the full
+  168px lockup width; "TECHNICAL SERVICES" is Jost 300 at a 9.6px cap height
+  tracked to the same width (both measured on the PNG, rows 102-126 and 134-143).
+
+Writes lib/logo.ts (one path per shape, for the preloader), public/brand/*.svg
+and app/icon.svg. Run: python3 scripts/logo.py (needs fonttools).
+"""
+import json
+import math
+from pathlib import Path
+
+from fontTools.pens.svgPathPen import SVGPathPen
+from fontTools.pens.transformPen import TransformPen
+from fontTools.ttLib import TTFont
+from fontTools.varLib.instancer import instantiateVariableFont
+
+ROOT = Path(__file__).resolve().parent.parent
+FONT = ROOT / "_scrape" / "Jost.ttf"
+
+# Facet colours sampled from the header PNG (each ~895px, the five largest flat fills).
+FACETS = [
+    ("navy", "#074059"),   # top -> right
+    ("slate", "#58585A"),  # right -> bottom right
+    ("stone", "#A7A9AC"),  # bottom edge
+    ("sky", "#8CD1E9"),    # bottom left -> left
+    ("teal", "#1AB1C8"),   # left -> top
+]
+WORD = "#0A2B4A"  # wordmark fill, 787px in the header PNG
+HOLE = "#F4F6F6"
+# Reverse (on navy): the facets become white at stepped opacities, keeping the aperture readable
+# without introducing new hues. Ordered as FACETS.
+MONO = [1, 0.55, 0.35, 0.7, 0.85]  # the centre shows through on icon.png
+
+
+def mark(size_w=136.0):
+    """Return (width, height, triangles, hole) for a mark `size_w` wide."""
+    R = size_w / (2 * math.sin(math.radians(72)))
+    cx, cy = size_w / 2, R
+    height = R * (1 + math.cos(math.radians(36)))
+    V = [(cx + R * math.cos(math.radians(-90 + 72 * k)), cy + R * math.sin(math.radians(-90 + 72 * k))) for k in range(5)]
+    r = 0.194 * R
+    I = [(cx + r * math.cos(math.radians(-130 + 72 * k)), cy + r * math.sin(math.radians(-130 + 72 * k))) for k in range(5)]
+    tris = [[V[k], V[(k + 1) % 5], I[k]] for k in range(5)]
+    return size_w, height, tris, I, (cx, cy)
+
+
+def glyph_paths(font, text, cap_px, width_px, x0, baseline):
+    """Lay `text` out at `cap_px` cap height, tracked so it spans exactly `width_px`."""
+    cap = font["OS/2"].sCapHeight
+    s = cap_px / cap
+    cmap = font.getBestCmap()
+    gs = font.getGlyphSet()
+    hmtx = font["hmtx"]
+    names = [cmap[ord(c)] for c in text]
+    # Ink bounds of the first and last glyph so the letters (not their sidebearings) hit the edges.
+    from fontTools.pens.boundsPen import BoundsPen
+
+    def bounds(n):
+        bp = BoundsPen(gs)
+        gs[n].draw(bp)
+        return bp.bounds
+
+    first_l = bounds(names[0])[0] if bounds(names[0]) else 0
+    last = names[-1]
+    last_r = bounds(last)[2] if bounds(last) else hmtx[last][0]
+    natural = sum(hmtx[n][0] for n in names[:-1]) + last_r - first_l
+    gaps = len(names) - 1
+    track = (width_px / s - natural) / gaps if gaps else 0
+    out = []
+    x = -first_l
+    for ch, n in zip(text, names):
+        if ch != " ":
+            pen = SVGPathPen(gs, ntos=lambda v: f"{v:.2f}".rstrip("0").rstrip("."))
+            tp = TransformPen(pen, (s, 0, 0, -s, x0 + x * s, baseline))
+            gs[n].draw(tp)
+            out.append({"ch": ch, "d": pen.getCommands()})
+        x += hmtx[n][0] + track
+    return out
+
+
+def main():
+    base = TTFont(FONT)
+    regular = instantiateVariableFont(TTFont(FONT), {"wght": 400})
+    light = instantiateVariableFont(TTFont(FONT), {"wght": 300})
+    del base
+
+    # Stacked lockup, same 168x144 frame as the PNG. Mark rows 0-87 -> 88px tall, centred.
+    mh = 88.0
+    mw = mh * 136 / 129
+    W, H, tris, inner, (cx, cy) = mark(mw)
+    ox = (168 - mw) / 2
+    tris = [[(ox + x, y) for x, y in t] for t in tris]
+    inner = [(ox + x, y) for x, y in inner]
+
+    top = glyph_paths(regular, "PENTAGON", 25, 168, 0, 126.6)
+    sub = glyph_paths(light, "TECHNICAL SERVICES", 9.6, 166, 1, 143.4)
+
+    fmt = lambda pts: " ".join(f"{x:.2f},{y:.2f}" for x, y in pts)
+    facets = [{"name": n, "fill": c, "points": fmt(t)} for (n, c), t in zip(FACETS, tris)]
+    data = {
+        "viewBox": "0 0 168 144",
+        "facets": facets,
+        "hole": {"fill": HOLE, "points": fmt(inner)},
+        "word": WORD,
+        "mono": MONO,
+        "top": top,
+        "sub": sub,
+        "markBox": [round(ox, 2), 0, round(mw, 2), mh],
+    }
+
+    (ROOT / "lib" / "logo.ts").write_text(
+        "/* Generated by scripts/logo.py. Do not edit by hand.\n"
+        "   The logo rebuilt as one shape per part: five mark facets, the centre hole,\n"
+        "   and one path per letter of PENTAGON and TECHNICAL SERVICES. */\n"
+        f"export const LOGO = {json.dumps(data, indent=2)} as const;\n"
+    )
+
+    # Adjacent facets share edges; a hairline stroke in the facet's own colour hides the anti-aliasing seam.
+    def svg(word_fill, mono=False):
+        parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 144">']
+        if not mono:
+            parts.append(f'<polygon points="{data["hole"]["points"]}" fill="{HOLE}"/>')
+        for f, a in zip(facets, MONO):
+            fill = "#FFFFFF" if mono else f["fill"]
+            op = f' fill-opacity="{a}" stroke-opacity="{a}"' if mono else ""
+            parts.append(f'<polygon points="{f["points"]}" fill="{fill}" stroke="{fill}" stroke-width=".4" stroke-linejoin="round"{op}/>')
+        for g in top + sub:
+            parts.append(f'<path d="{g["d"]}" fill="{word_fill}"/>')
+        parts.append("</svg>")
+        return "".join(parts)
+
+    brand = ROOT / "public" / "brand"
+    brand.mkdir(parents=True, exist_ok=True)
+    (brand / "logo.svg").write_text(svg(WORD))
+    (brand / "logo-white.svg").write_text(svg("#FFFFFF", mono=True))
+
+    # Square icon: the mark alone, centred.
+    iw, ih, itris, iinner, _ = mark(136)
+    pad = (136 - ih) / 2
+    icon = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -{pad + 4:.2f} 136 144">']
+    icon.append(f'<polygon points="{fmt(iinner)}" fill="{HOLE}"/>')
+    for (n, c), t in zip(FACETS, itris):
+        icon.append(f'<polygon points="{fmt(t)}" fill="{c}" stroke="{c}" stroke-width=".6" stroke-linejoin="round"/>')
+    icon.append("</svg>")
+    (ROOT / "app" / "icon.svg").write_text("".join(icon))
+    (brand / "mark.svg").write_text("".join(icon))
+    print("wrote lib/logo.ts, public/brand/{logo,logo-white,mark}.svg, app/icon.svg")
+
+
+if __name__ == "__main__":
+    main()
