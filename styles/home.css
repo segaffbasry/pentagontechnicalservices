@@ -57,11 +57,29 @@
 .pillars__shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7, 64, 89, .55) 0%, rgba(7, 64, 89, .25) 40%, rgba(7, 64, 89, .92) 100%); }
 .pillars__head { position: relative; display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
 .pillars__title { max-width: 18ch; font: 400 clamp(28px, 2.9vw, 42px)/1 var(--f-cond); text-transform: uppercase; letter-spacing: -.01em; }
+.pillars__nav { display: grid; justify-items: end; gap: 18px; flex: none; }
 .pillars__count { font: 300 clamp(40px, 4vw, 56px)/.9 var(--f-cond); letter-spacing: -.02em; }
+.pillars__of { font-size: .42em; letter-spacing: .04em; color: rgba(255, 255, 255, .7); vertical-align: top; margin-left: .2em; }
+.pillars__arrows { display: flex; gap: 8px; }
+/* Square arrow buttons, the same control as the "Why Pentagon" slider, reversed for the dark panel. */
+.pillars__arrow { display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid rgba(255, 255, 255, .6); border-radius: var(--radius-sm); background: rgba(7, 64, 89, .3); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background-color var(--hover) var(--ease), color var(--hover) var(--ease), border-color var(--hover) var(--ease); }
+.pillars__arrow svg { width: 16px; height: 16px; }
+.pillars__arrow:hover { background: var(--white); border-color: var(--white); color: var(--ink); }
 .pillars__tabs { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(16px, 2vw, 32px); margin-top: 48px; }
 .pillars__item { display: flex; flex-direction: column; }
-.pillars__tab { text-align: left; padding: 0 0 12px; font: 400 clamp(16px, 1.3vw, 19px)/1.2 var(--f-sans); color: rgba(255, 255, 255, .72); transition: color var(--hover) var(--ease); }
-.pillars__tab:hover, .pillars__item[data-active] .pillars__tab { color: var(--white); }
+.pillars__tab {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 10px;
+  text-align: left; padding: 10px 10px 12px; margin: 0 -10px; width: calc(100% + 20px); border-radius: var(--radius-sm);
+  font: 400 clamp(16px, 1.3vw, 19px)/1.2 var(--f-sans); color: rgba(255, 255, 255, .78);
+  transition: color var(--hover) var(--ease), background-color var(--hover) var(--ease);
+}
+.pillars__num { padding-top: .2em; font: 500 12px/1 var(--f-cond); letter-spacing: .08em; color: var(--cyan); }
+.pillars__plus { position: relative; width: 12px; height: 12px; margin-top: .3em; }
+.pillars__plus::before, .pillars__plus::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1.5px; margin-top: -.75px; background: currentColor; transition: transform .3s var(--ease); }
+.pillars__plus::after { transform: rotate(90deg); }
+.pillars__item[data-active] .pillars__plus::after { transform: rotate(0deg); }
+.pillars__tab:hover { background: rgba(255, 255, 255, .1); color: var(--white); }
+.pillars__item[data-active] .pillars__tab { color: var(--white); }
 .pillars__details { overflow: hidden; }
 .pillars__details p { padding-bottom: 14px; font-size: 14px; line-height: 1.5; color: rgba(255, 255, 255, .85); }
 .pillars__more { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; font: 500 13px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; }
@@ -144,11 +162,15 @@ html:not(.js) .values__points li { grid-area: auto; }
 
 /* ---------- Accreditations ---------- */
 .accred { background: var(--mist); padding: clamp(72px, 9vw, 130px) 0; }
-.accred__inner { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(32px, 5vw, 80px); align-items: center; }
-.accred__head { display: grid; gap: 22px; justify-items: start; }
+.accred__head { display: grid; gap: 22px; justify-items: center; text-align: center; }
 .accred__note { font: 400 13px/1.4 var(--f-cond); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
-.accred__card { margin: 0; padding: clamp(20px, 3vw, 44px); border-radius: var(--radius); background: var(--white); box-shadow: 0 1px 4px rgba(0, 0, 0, .06); }
-.accred__card img { width: 100%; height: auto; }
+/* Logo ticker: the marks sit straight on the mist band, with the strip fading out at both edges. */
+.accred__ticker { margin-top: clamp(40px, 5vw, 72px); -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+.marquee--logos .marquee__row li { padding: 0 clamp(24px, 3.4vw, 52px); }
+.marquee--logos .marquee__row li::after { content: none; }
+.accred__logo { height: clamp(60px, 6vw, 88px); width: auto; max-width: none; }
+.accred__logo--constructionline { height: clamp(46px, 4.4vw, 64px); }
+.accred__logo--carbon { height: clamp(52px, 5vw, 74px); }
 
 /* ---------- News ---------- */
 .news { padding-top: clamp(80px, 10vw, 150px); padding-bottom: clamp(80px, 10vw, 140px); }
@@ -175,7 +197,6 @@ html:not(.js) .values__points li { grid-area: auto; }
   .services__intro { grid-column: 1 / -1; position: static; }
   .services__list-wrap { grid-column: 1 / -1; }
   .news__grid { grid-template-columns: repeat(2, 1fr); }
-  .accred__inner { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
   .hero__side { justify-items: start; }

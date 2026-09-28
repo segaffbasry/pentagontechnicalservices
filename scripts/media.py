@@ -42,8 +42,7 @@ def main():
             im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
         im.save(OUT / f"{name}.webp", "WEBP", quality=80, method=6)
         print(f"{name}.webp {im.width}x{im.height}")
-    # Accreditation logos keep their transparency.
-    Image.open(SRC / "Accreditations-scaled-e1758640393389.png").save(OUT / "accreditations.webp", "WEBP", quality=90, method=6)
+    # The accreditation marks are split out separately by scripts/logos.py.
     shutil.copy(SRC / "banner.mp4", OUT / "hero.mp4")
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", "4", "-i", str(OUT / "hero.mp4"), "-frames:v", "1", "-q:v", "3", str(SRC / "poster.jpg")], check=True)
     Image.open(SRC / "poster.jpg").save(OUT / "hero-poster.webp", "WEBP", quality=78)

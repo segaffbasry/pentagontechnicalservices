@@ -129,11 +129,21 @@ export const projects = {
   ].map(([label, path]) => ({ label, href: u(path) })),
 };
 
+/* The live composite image split into one transparent mark each by scripts/logos.py, in the live left-to-right order. */
 export const accreditations = {
   title: "Accreditations & Certifications",
-  image: "/media/accreditations.webp",
-  alt: "ISO 14001:2015, ISO 9001:2015 and ISO 45001:2018 (Peers Quality Assurance, UKAS 9940); CHAS Standard and CHAS Elite; Constructionline Bronze, Silver and Gold; Carbon Footprint Standard CO2e Assessed Organisation",
   note: "*ISO Certifications scope cover UK Head office only.",
+  logos: [
+    { name: "ISO 14001:2015, Peers Quality Assurance, UKAS 9940", file: "iso-14001" },
+    { name: "ISO 9001:2015, Peers Quality Assurance, UKAS 9940", file: "iso-9001" },
+    { name: "ISO 45001:2018, Peers Quality Assurance, UKAS 9940", file: "iso-45001" },
+    { name: "CHAS Accreditation Standard", file: "chas-standard" },
+    { name: "CHAS Accreditation Elite", file: "chas-elite" },
+    { name: "Constructionline Bronze Member", file: "constructionline-bronze" },
+    { name: "Constructionline Silver Member", file: "constructionline-silver" },
+    { name: "Constructionline Gold Member", file: "constructionline-gold" },
+    { name: "Carbon Footprint Standard, CO2e Assessed Organisation", file: "carbon-footprint" },
+  ],
 };
 
 export const values = {

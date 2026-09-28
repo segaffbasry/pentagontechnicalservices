@@ -14,18 +14,20 @@ import { gsap, ScrollTrigger } from "@/lib/gsap";
    - incoming: visual autoAlpha 0 -> 1 from xPercent 3, details height 0 -> auto, bar reset to scaleX 0
    - on complete, the incoming bar fills scaleX 0 -> 1 over the autoplay time (5s, "power1.inOut"), then the next tab
    - clicks jump straight to a tab; clicks during a switch are ignored (isAnimating)
-   Additions: tabs are real buttons with aria-selected, arrow keys move between them, and autoplay is off for
-   reduced motion. The big title and 01-04 counter follow the active tab. */
+   Additions (client feedback, 28 Sep: "not obvious it's switchable, long wait to reach 4"): prev/next arrows and a
+   01 / 04 counter in the panel head, numbered tabs with a hover state, and autoplay stops for good as soon as the
+   visitor clicks a tab, an arrow or uses the keyboard (the active bar then shows full). Tabs are real buttons with
+   aria-selected, arrow keys move between them, and autoplay is off for reduced motion. */
 export default function Pillars() {
   const ref = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
-  const api = useRef<{ go: (i: number) => void } | null>(null);
+  const api = useRef<{ go: (i: number, manual?: boolean) => void; step: (d: number) => void } | null>(null);
 
   useEffect(() => {
     const wrapper = ref.current!;
     const contentItems = wrapper.querySelectorAll<HTMLElement>("[data-tabs='content-item']");
     const visualItems = wrapper.querySelectorAll<HTMLElement>("[data-tabs='visual-item']");
-    const autoplay = !reducedMotion();
+    let autoplay = !reducedMotion();
     let activeIndex = -1;
     let isAnimating = false;
     let progressBarTween: gsap.core.Tween | null = null;
@@ -46,7 +48,11 @@ export default function Pillars() {
       });
     }
 
-    function switchTab(index: number) {
+    function switchTab(index: number, manual = false) {
+      if (manual && autoplay) {
+        autoplay = false;
+        if (activeIndex >= 0) { progressBarTween?.kill(); gsap.to(bar(activeIndex), { scaleX: 1, duration: .3 }); }
+      }
       if (isAnimating || index === activeIndex) return;
       isAnimating = true;
       progressBarTween?.kill();
@@ -67,7 +73,8 @@ export default function Pillars() {
         .set(bar(index), { scaleX: autoplay ? 0 : 1, transformOrigin: "left center" }, 0);
     }
 
-    api.current = { go: switchTab };
+    const n = contentItems.length;
+    api.current = { go: switchTab, step: (d) => switchTab(((activeIndex < 0 ? 0 : activeIndex) + d + n) % n, true) };
     const st = ScrollTrigger.create({ trigger: wrapper, start: "top 80%", once: true, onEnter: () => switchTab(0) });
     return () => { st.kill(); progressBarTween?.kill(); api.current = null; };
   }, []);
@@ -77,7 +84,7 @@ export default function Pillars() {
     const next = e.key === "ArrowRight" ? (i + 1) % n : e.key === "ArrowLeft" ? (i - 1 + n) % n : -1;
     if (next < 0) return;
     e.preventDefault();
-    api.current?.go(next);
+    api.current?.go(next, true);
     ref.current?.querySelectorAll<HTMLButtonElement>("[role='tab']")[next]?.focus();
   };
 
@@ -95,7 +102,16 @@ export default function Pillars() {
 
         <div className="pillars__head">
           <p className="pillars__title" aria-live="polite">{pillars[active].title}</p>
-          <p className="pillars__count" aria-hidden="true">{String(active + 1).padStart(2, "0")}</p>
+          <div className="pillars__nav">
+            <p className="pillars__count">
+              <span className="sr-only">Service </span>{String(active + 1).padStart(2, "0")}
+              <span className="pillars__of"><span aria-hidden="true"> / </span><span className="sr-only"> of </span>{String(pillars.length).padStart(2, "0")}</span>
+            </p>
+            <div className="pillars__arrows">
+              <button className="pillars__arrow" onClick={() => api.current?.step(-1)} aria-label="Previous service"><Arrow dir="left" /></button>
+              <button className="pillars__arrow" onClick={() => api.current?.step(1)} aria-label="Next service"><Arrow /></button>
+            </div>
+          </div>
         </div>
 
         <div className="pillars__tabs" role="tablist" aria-label="Services">
@@ -104,9 +120,11 @@ export default function Pillars() {
               <button
                 role="tab" id={`pillar-tab-${i}`} aria-selected={i === active} aria-controls={`pillar-panel-${i}`}
                 tabIndex={i === active ? 0 : -1} className="pillars__tab"
-                onClick={() => api.current?.go(i)} onKeyDown={(e) => onKey(e, i)}
+                onClick={() => api.current?.go(i, true)} onKeyDown={(e) => onKey(e, i)}
               >
-                {p.title}
+                <span className="pillars__num">{String(i + 1).padStart(2, "0")}</span>
+                <span className="pillars__name">{p.title}</span>
+                <span className="pillars__plus" aria-hidden="true" />
               </button>
               <div className="pillars__details" data-tabs="item-details" id={`pillar-panel-${i}`} role="tabpanel" aria-labelledby={`pillar-tab-${i}`}>
                 <p>{p.body}</p>

@@ -7,7 +7,10 @@ import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 /* siteassist.com initMarqueeScrollDirection, ported: the row loops at a speed scaled to its width, reverses
    direction with the scroll direction, and the whole strip drifts ±scrollSpeed vw as it crosses the viewport. */
-export default function Marquee({ items, label }: { items: string[]; label: string }) {
+/* `items` are the loop keys; `render` draws each one (text by default); `names` is what screen readers get. */
+type Props = { items: string[]; label: string; names?: string[]; render?: (item: string) => React.ReactNode; className?: string };
+
+export default function Marquee({ items, label, names = items, render, className }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,13 +38,13 @@ export default function Marquee({ items, label }: { items: string[]; label: stri
 
   const row = (hidden: boolean, key: number) => (
     <ul key={key} className="marquee__row" data-marquee-collection aria-hidden={hidden || undefined}>
-      {items.map((item) => <li key={item}>{item}</li>)}
+      {items.map((item) => <li key={item}>{render ? render(item) : item}</li>)}
     </ul>
   );
 
   return (
-    <div ref={ref} className="marquee">
-      <p className="sr-only">{label}: {items.join(", ")}</p>
+    <div ref={ref} className={`marquee ${className ?? ""}`}>
+      <p className="sr-only">{label}: {names.join(", ")}</p>
       <div className="marquee__scroll" data-marquee-scroll aria-hidden="true">
         {Array.from({ length: MARQUEE.duplicate + 1 }, (_, i) => row(true, i))}
       </div>

@@ -6,7 +6,7 @@ A private prospect demo: the pentagontechnicalservices.com **homepage only**, re
 
 Run `npm install`, then `npm run dev` (http://127.0.0.1:3023). `npm run build` then `npm start` serves production, and `npm run typecheck` checks TypeScript.
 
-`npm run logo` rebuilds the vector logo (it needs `fonttools`). `npm run media` rebuilds `public/media` from `_scrape/` (it needs Pillow and ffmpeg). `_scrape/` is gitignored and holds the raw downloads from the live site.
+`npm run logo` rebuilds the vector logo (it needs `fonttools`). `python3 scripts/logos.py` splits the accreditations composite into transparent marks (it needs Pillow and numpy). `npm run media` rebuilds `public/media` from `_scrape/` (it needs Pillow and ffmpeg). `_scrape/` is gitignored and holds the raw downloads from the live site.
 
 ## Recon
 
@@ -70,7 +70,10 @@ The logo's greys and light blue appear only inside the logo.
 - **Incoming tab.** The visual moves from `xPercent 3` to 0 and fades in, the details open to `height: auto`, and the bar resets.
 - **Autoplay.** Once a switch completes, the bar fills over 5s on `power1.inOut` and moves to the next tab. Clicks during a switch are ignored.
 
-Additions: the tabs are real buttons with `aria-selected`, the arrow keys move between them, and autoplay is off under reduced motion. The constants live in `lib/ease.ts` (`TABS`).
+Additions:
+- **Navigation.** Prev/next arrow buttons and a "01 / 04" counter in the panel head, plus numbered tabs with a hover state and a +/− marker, so it's obvious the panel can be switched. These came from client feedback on 28 Sep: it wasn't obvious the panel was switchable, and reaching tab 4 took a long wait.
+- **Autoplay stops** for good the moment the visitor clicks a tab or an arrow, or uses the keyboard; the active bar then shows full.
+- **Accessibility.** The tabs are real buttons with `aria-selected`, the arrow keys move between them, and autoplay is off under reduced motion. The constants live in `lib/ease.ts` (`TABS`).
 
 ## Motion system (`components/motion.tsx`)
 
@@ -86,7 +89,7 @@ All moves play once, on the `pts` curve (siteassist's button curve, registered i
 
 - **Preloader** (`components/Preloader.tsx`, about 2.2s). The five facets close in like an aperture: each turns 72° about the pentagon's centre as it grows. The letters rise, a cyan bar fills, and then the white panel lifts. It dispatches `intro:done`, which the hero timeline and Lenis wait for.
 - **Header tone.** Any `[data-tone="dark"]` section under the header switches it to smoked glass with the white logo.
-- **Also:** the 300+ counter, the hero office ticker (siteassist's marquee), and a cursor-follow preview on the services list (pointer devices only).
+- **Also:** the 300+ counter, the hero office ticker and the accreditation logo ticker (both use siteassist's marquee, `components/home/Marquee.tsx`), and a cursor-follow preview on the services list (pointer devices only).
 
 ## Accessibility and fallbacks
 
@@ -112,6 +115,7 @@ All moves play once, on the `pts` curve (siteassist's button curve, registered i
 - **Labels added** for structure: "What we do", "Featured work", "All projects", "Why Pentagon", "Assurance" and "Let's talk". These are UI labels, not claims.
 - **Hero film.** The only film is 850×480, so it sits under the navy overlay, where the softness reads as depth.
 - **Lenis lerp 0.6** is siteassist's measured value. It feels close to native scrolling.
+- **Accreditations.** The live site shows one white composite image. Following client feedback ("make the logos scrollable with a transparent background"), `scripts/logos.py` cuts it into nine marks and keys out the white. It also paints out a stray "Silver Member" caption that overlapped the gold Constructionline box. The marks run as a ticker on the mist band, and screen readers get their full names.
 - The service-list preview images reuse the live homepage photography. The live site has no per-service images.
 
 ## Structure
